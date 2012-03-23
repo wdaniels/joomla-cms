@@ -151,7 +151,7 @@ CREATE TABLE "#__session"
   "client_id" SMALLINT DEFAULT 0,
   "guest" SMALLINT DEFAULT 1,
   "time" NVARCHAR DEFAULT N'',
-  "data" LONG NVARCHAR DEFAULT NULL,
+  "data" LONG VARBINARY DEFAULT NULL,
   "userid" INTEGER DEFAULT 0,
   "username" NVARCHAR DEFAULT N'',
   "usertype" NVARCHAR DEFAULT N'',
