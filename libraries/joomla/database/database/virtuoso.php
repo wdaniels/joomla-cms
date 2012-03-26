@@ -600,8 +600,42 @@ class JDatabaseVirtuoso extends JDatabase
 	{
 		// NB: Overloaded because of virtuoso name quoting using double quotes
 		// NB: ISO SQL standard for quoting identifiers is also the double quote!
-		// TODO: Something fancier like in parent class (or fix in core)
-		return str_replace($prefix, $this->tablePrefix, $sql);
+
+		// Best case performance is no prefix, cost is only this preg_match
+		if (preg_match_all("/$prefix/", $sql, $matches, PREG_OFFSET_CAPTURE))
+		{
+			$prefixes = $matches[0];
+
+			$q = str_replace('\\\'', 'xx', $sql); // ignore escaped string quotes
+			preg_match_all('@\'.*?\'@', $q, $strings, PREG_OFFSET_CAPTURE);
+
+			$modified = $sql; $offset = 0;
+			$exclusions = $strings[0];
+
+			// performance here will degrade with |prefixes| . |exclusions|
+			foreach ($prefixes as $match)
+			{
+				$replace = true; // assume it's OK to replace
+				foreach ($exclusions as $exclude)
+				{
+					$begin = $exclude[1]; // offset of string literal
+					$end = $begin + strlen($exclude[0]); // end of string literal
+
+					// if the prefix is within this a string literal, skip replacement
+					if ($match[1] >= $begin && $match[1] <= $end) $replace = false;
+				}
+				if ($replace)
+				{
+					$modified = substr_replace($modified, $this->tablePrefix,
+						$match[1] + $offset, strlen($match[0]));
+
+					// track offset adjustment to account for our modifications
+					$offset += (strlen($this->tablePrefix) - strlen($prefix));
+				}
+			}
+			return $modified;
+		}
+		return $sql;
 	}
 
 	/**
