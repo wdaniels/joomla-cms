@@ -390,10 +390,10 @@ class JDatabaseVirtuoso extends JDatabase
 	public function getTableColumns($table, $typeOnly = true)
 	{
 		$result = array();
-		$sql = 'SELECT COLUMN_NAME AS Field, DATA_TYPE AS Type, ';
-		$sql.= ' NULLABLE AS \'Null\', COLUMN_DEF AS \'Default\' ';
+		$sql = 'SELECT COLUMN_NAME AS "Field", DATA_TYPE AS "Type",';
+		$sql.= ' NULLABLE AS "Null", COLUMN_DEF AS "Default" ';
 		$sql.= 'FROM INFORMATION_SCHEMA.COLUMNS ';
-		$sql.= 'WHERE TABLE_NAME = '.$this->quote($table);
+		$sql.= 'WHERE TABLE_NAME = '.$this->quote($this->replacePrefix($table));
 
 		$this->setQuery($sql);
 		$fields = $this->loadObjectList();
@@ -415,7 +415,6 @@ class JDatabaseVirtuoso extends JDatabase
 				$result[$field->Field] = $field;
 			}
 		}
-
 		return $result;
 	}
 
