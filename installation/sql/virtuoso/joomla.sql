@@ -1501,6 +1501,7 @@ CREATE TABLE "#__updates"
   "version" NVARCHAR DEFAULT N'',
   "data" NVARCHAR DEFAULT N'',
   "detailsurl" NVARCHAR DEFAULT N'',
+  "infourl" NVARCHAR DEFAULT N'',
   PRIMARY KEY ("update_id")
 );
 
