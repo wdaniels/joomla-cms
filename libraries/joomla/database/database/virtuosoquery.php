@@ -59,7 +59,7 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 				// Set method
 				if ($this->set)
 				{
-					$query .= (string) $this->set;
+					throw new JDatabaseException('Invalid SQL form INSERT ... SET ...');
 				}
 				// Columns-Values method
 				elseif ($this->values)
@@ -74,12 +74,6 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 
 					$query .= ' VALUES ';
 					$query .= (string) $this->values;
-
-					if ($this->where)
-					{
-						$query .= (string) $this->where;
-					}
-
 				}
 
 				break;
@@ -88,8 +82,70 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 				$query = parent::__toString();
 				break;
 		}
-
 		return $query;
+	}
+
+	/**
+	 * Add a single condition string, or an array of strings to the SET clause of the query.
+	 *
+	 * Usage:
+	 * $query->set('a = 1')->set('b = 2');
+	 * $query->set(array('a = 1', 'b = 2');
+	 *
+	 * @param   mixed   $conditions  A string or array of string conditions.
+	 * @param   string  $glue        The glue by which to join the condition strings. Defaults to ,.
+	 *                               Note that the glue is set on first use and cannot be changed.
+	 *
+	 * @return  JDatabaseQuery  Returns this object to allow chaining.
+	 *
+	 * @since   11.1
+	 */
+	public function set($conditions, $glue = ',')
+	{
+		if (!is_null($this->insert))
+		{
+			/**
+			* The non-standard SQL form INSERT ... SET foo = bar is unsupported.
+			*
+			* We're going to massage this into the standard SQL form:
+			*
+			*   INSERT ... (column, list) VALUES (foo, bar)
+			*
+			* assuming that usage will never be like ->set('foo=bar, x=y') rather
+			* than multiple calls or passed as an array, as shown in the usage
+			* notes above.
+			*
+			* That may be an unsafe assumption. Time will tell.
+			*/
+
+			if (!is_array($conditions))
+			{
+				$conditions = array($conditions); // normalise inputs
+			}
+
+			foreach($conditions as $condition)
+			{
+				$parts = explode('=', $condition);
+				$column = array_shift($parts);
+				$this->columns($column);
+
+				$value = implode('', $parts);
+				if (!is_null($this->values))
+				{
+					$elements = $this->values->getElements();
+					if (($i = count($elements)) > 1)
+					{
+						$msg = 'Multiple value tuples for INSERT query unexpected.';
+						throw new JDatabaseException($msg);
+					}
+					$value = $elements[0] . ', ' . $value;
+					$this->values = null; // _elements is protected so force recreate
+				}
+				$this->values($value);
+			}
+			return $this;
+		}
+		return parent::set($conditions, $glue);
 	}
 
 	/**
@@ -153,7 +209,7 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 	 */
 	public function currentTimestamp()
 	{
-		return 'GETDATE()';
+		return 'CURRENT_TIMESTAMP';
 	}
 
 	/**
