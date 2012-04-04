@@ -776,8 +776,9 @@ class JDatabaseVirtuoso extends JDatabase
 	 */
 	public function transactionCommit()
 	{
-		$this->setQuery('COMMIT');
-		$this->query();
+		$success = odbc_commit($this->connection);
+		odbc_autocommit($this->connection, true);
+		return $success;
 	}
 
 	/**
@@ -790,8 +791,8 @@ class JDatabaseVirtuoso extends JDatabase
 	 */
 	public function transactionRollback()
 	{
-		$this->setQuery('ROLLBACK');
-		$this->query();
+		odbc_rollback($this->connection);
+		odbc_autocommit($this->connection, true);
 	}
 
 	/**
@@ -804,8 +805,7 @@ class JDatabaseVirtuoso extends JDatabase
 	 */
 	public function transactionStart()
 	{
-		$this->setQuery('START TRANSACTION');
-		$this->query();
+		odbc_autocommit($this->connection, false);
 	}
 
 	/**
@@ -938,42 +938,28 @@ class JDatabaseVirtuoso extends JDatabase
 		// Deprecation warning.
 		JLog::add('JDatabaseVirtuoso::queryBatch() is deprecated.', JLog::WARNING, 'deprecated');
 
-		$sql = $this->replacePrefix((string) $this->sql);
-		$this->errorNum = 0;
-		$this->errorMsg = '';
+                $queries = $this->sql;
+
+                // Serialized values look like a:x (array) or O:x (objects) which cannot be valid SQL
+                if ($queries[1] == ':') $queries = unserialize($queries);
+
+                if (!is_array($queries)) $queries = $this->splitSql($queries);
+
+		// We support setting an array of queries anyway in this driver
+		$this->setQuery($queries);
 
 		// If the batch is meant to be transaction safe then we need to wrap it in a transaction.
-		if ($transactionSafe)
+		if ($transactionSafe) $this->transactionStart();
+		try
 		{
-			$sql = 'START TRANSACTION;' . rtrim($sql, "; \t\r\n\0") . '; COMMIT;';
+			$this->query();
 		}
-		$queries = $this->splitSql($sql);
-		$error = 0;
-		foreach ($queries as $query)
+		catch (Exception $e)
 		{
-			$query = trim($query);
-			if ($query != '')
-			{
-				$this->cursor = odbc_exec($this->connection, $query);
-				if ($this->debug)
-				{
-					$this->count++;
-					$this->log[] = $query;
-				}
-				if (!is_resource($this->cursor))
-				{
-					$error = 1;
-				  $this->errorNum = (int) odbc_error($this->connection);
-				  $this->errorMsg = (string) odbc_errormsg($this->connection) . " SQL=$query <br />";
-
-					if ($abortOnError)
-					{
-						return $this->cursor;
-					}
-				}
-			}
+			if ($transactionSafe) $this->transactionRollback();
+			throw $e;
 		}
-		return $error ? false : true;
+		return $transactionSafe ? $this->transactionCommit() : true;
 	}
 
 	/**
