@@ -367,7 +367,7 @@ class JDatabaseVirtuoso extends JDatabase
 		// will generate lots of noise with QW004 errors, and also has some
 		// unpredictable (buggy) behaviours if we don't do this:
 		if (!preg_match('/(CREATE|ALTER) TABLE (".*")/i', $q)) {
-			$q = preg_replace('/([^\\\\\\(])(\'\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\')/', '${1}stringdate(${2})', $q);
+			$q = preg_replace('/(?<!{ts)([^\\\\\\(])(\'\\d\\d\\d\\d-\\d\\d-\\d\\d \\d\\d:\\d\\d:\\d\\d\')/', '${1}stringdate(${2})', $q);
 		}
 		// Strip any GROUP BY clauses that include known long data types
 		// TODO: Talk to the Joomla! devs about this issue!
