@@ -470,8 +470,8 @@ class JDatabaseVirtuoso extends JDatabase
 	public function getVersion()
 	{
 		$cur = odbc_exec($this->connection, "SELECT sys_stat('st_dbms_ver')");
-		if (is_resource($cur)) $ver = odbc_fetch_array($cur);
-		return (isset($id['sys_stat']) ? $id['sys_stat'] : 6);
+		if (is_resource($cur)) return odbc_result($cur, 'sys_stat');
+		return  6;
 	}
 
 	/**
@@ -503,8 +503,8 @@ class JDatabaseVirtuoso extends JDatabase
 	{
 		// TODO: Virtuoso specific, maybe use ODBC SQL_LASTSERIAL statement instead
 		$cur = odbc_exec($this->connection, "SELECT identity_value()");
-		if (is_resource($cur)) $id = odbc_fetch_array($cur);
-		return (isset($id['identity_value']) ? $id['identity_value'] : 0);
+		if (is_resource($cur)) return odbc_result($cur, 'identity_value');
+		return 0;
 	}
 
 	/**
