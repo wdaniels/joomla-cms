@@ -54,7 +54,7 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 		switch ($this->type)
 		{
 			case 'insert':
-				$query .= (string) $this->insert;
+				$q = (string) $this->insert;
 
 				// Set method
 				if ($this->set)
@@ -66,14 +66,22 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 				{
 					if ($this->columns)
 					{
-						$query .= (string) $this->columns;
+						$q .= (string) $this->columns;
 					}
 
-					$elements = $this->insert->getElements();
-					$tableName = array_shift($elements);
-
-					$query .= ' VALUES ';
-					$query .= (string) $this->values;
+					$tuples = $this->values->getElements();
+					if (count($tuples) > 1)
+					{
+						$query = array();
+						foreach ($tuples as $tuple)
+						{
+							$query[] = $q . ' VALUES (' . $tuple . ')';
+						}
+						$query = serialize($query);
+					}
+					else {
+						$query .= $q . ' VALUES (' . $tuples[0] . ')';
+					}
 				}
 
 				break;

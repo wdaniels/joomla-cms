@@ -540,47 +540,58 @@ class JDatabaseVirtuoso extends JDatabase
 			throw new JDatabaseException($this->errorMsg, $this->errorNum);
 		}
 
-		// Take a local copy so that we don't modify the original query and cause issues later
-		$sql = $this->replacePrefix((string) $this->sql);
+		// NB: We allow multiple queries in this driver by setting an array via ::setQuery
+		// This is non-standard for joomla but needed to support multi-row INSERTs for Virtuoso
+		$queries = $this->sql;
 
-		// TODO: Virtuoso doesn't like a trailing ; in SQLExecDirect, consider
-		// checking and stripping that here.
+		// Serialized values look like a:x (array) or O:x (objects) which cannot be valid SQL
+		if ($queries[1] == ':') $queries = unserialize($queries);
 
-		// If debugging is enabled then let's log the query.
-		if ($this->debug)
+		if (!is_array($queries)) $queries = array($queries);
+
+		foreach ($queries as $query)
 		{
-			// Increment the query counter and add the query to the object queue.
-			$this->count++;
-			$this->log[] = $sql;
+			// Take a local copy so that we don't modify the original query and cause issues later
+			$sql = $this->replacePrefix((string) $query);
 
-			JLog::add($sql, JLog::DEBUG, 'databasequery');
+			// If debugging is enabled then let's log the query.
+			if ($this->debug)
+			{
+				// Increment the query counter and add the query to the object queue.
+				$this->count++;
+				$this->log[] = $sql;
+
+				JLog::add($sql, JLog::DEBUG, 'databasequery');
+			}
+
+			// Reset the error values.
+			$this->errorNum = 0;
+			$this->errorMsg = '';
+
+			// Execute the query.
+			$this->cursor = odbc_exec($this->connection, $sql);
+
+			// If an error occurred handle it.
+			if (!is_resource($this->cursor))
+			{
+				$trace = array();
+				array_walk(debug_backtrace(), create_function('$a, $b, $c',
+					'$c[] = "{$a[\'function\']}() in [".basename($a[\'file\']).":{$a[\'line\']}]; ";'),
+					&$trace);
+
+				$this->errorNum = (int) odbc_error($this->connection);
+				$this->errorMsg = (string) odbc_errormsg($this->connection);
+				$this->errorMsg.= ' SQL=' . $sql;
+				$this->errorMsg.= ' TRACE=' . implode(' >> ', array_reverse($trace));
+
+				JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'databasequery');
+				throw new JDatabaseException($this->errorMsg, $this->errorNum);
+			}
 		}
 
-		// Reset the error values.
-		$this->errorNum = 0;
-		$this->errorMsg = '';
-
-		// Execute the query.
-		$this->cursor = odbc_exec($this->connection, $sql);
-
-		// If an error occurred handle it.
-		if (!is_resource($this->cursor))
-		{
-			$trace = array();
-			array_walk(debug_backtrace(), create_function('$a, $b, $c',
-				'$c[] = "{$a[\'function\']}() in [".basename($a[\'file\']).":{$a[\'line\']}]; ";'),
-				&$trace);
-
-			$this->errorNum = (int) odbc_error($this->connection);
-			$this->errorMsg = (string) odbc_errormsg($this->connection);
-			$this->errorMsg.= ' SQL=' . $sql;
-			$this->errorMsg.= ' TRACE=' . implode(' >> ', array_reverse($trace));
-
-			JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'databasequery');
-			throw new JDatabaseException($this->errorMsg, $this->errorNum);
-		}
-
+		// In the case of multiple queries, we can only capture affected rows for the final one
 		$this->odbc_affected_rows = odbc_num_rows($this->cursor);
+
 		return is_resource($this->cursor);
 	}
 
