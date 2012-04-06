@@ -10,13 +10,25 @@
 defined('JPATH_PLATFORM') or die;
 
 /**
- * Query Building Class for the Virtuoso ODBC adapter.
+ * Query Building Class for typical SQL-92 compliant dialects.
+ *
+ * Not everything defined here is part of the SQL standard, and some
+ * things depend upon the level of compliance. For the most part we
+ * assume Intermediate Level compliance, except where implementations
+ * are known to be uncommon.
+ *
+ * Noteworthy:
+ *
+ *  - Wide character data types (e.g. NVARCHAR) support is assumed.
+ *  - Support for CASE expressions (Intermediate Level) is assumed.
+ *  - Support for the CAST function (Transactional Level) is assumed.
+ *  - Support for "row value constructors" (Full Level) is _not_ assumed.
  *
  * @package     Joomla.Platform
  * @subpackage  Database
  * @since       11.1
  */
-class JDatabaseQueryVirtuoso extends JDatabaseQuery
+class JDatabaseQuerySQL92 extends JDatabaseQuery
 {
 	/**
 	 * The character(s) used to quote SQL statement names such as table names or field names,
@@ -183,7 +195,7 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 	 */
 	public function charLength($field)
 	{
-		return 'LENGTH(' . $field . ')';
+		return 'CHAR_LENGTH(' . $field . ')';
 	}
 
 	/**
@@ -200,11 +212,11 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 	{
 		if ($separator)
 		{
-			return 'CONCAT(' . implode(', ' . $this->quote($separator) . ', ', $values) . ')';
+			return implode(' || ' . $this->quote($separator) . ' || ', $values);
 		}
 		else
 		{
-			return 'CONCAT(' . implode(', ', $values) . ')';
+			return implode(' || ', $values);
 		}
 	}
 
@@ -231,6 +243,8 @@ class JDatabaseQueryVirtuoso extends JDatabaseQuery
 	 */
 	public function length($value)
 	{
-		return 'LENGTH(' . $value . ')';
+		// Assumes strict SQL92 compliance for the arithmetic here!
+		// Result of the division should be rounded down to smallest integer
+		return '((OCTET_LENGTH(' . $value . ') + 1) / 2)';
 	}
 }
