@@ -105,6 +105,29 @@ abstract class JDatabaseODBC extends JDatabase
 	}
 
 	/**
+	 * Determines if the connection to the server is active.
+	 *
+	 * @return  boolean  True if connected to the database engine.
+	 *
+	 * @since   11.1
+	 */
+	public function connected()
+	{
+		if (is_resource($this->connection))
+		{
+			$res = odbc_exec($this->connection, 'SELECT 1 AS foo');
+			if (is_resource($res))
+			{
+				if (odbc_result($res, 'foo') == 1)
+				{
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Method to escape a string for usage in an SQL statement.
 	 *
 	 * @param   string   $text   The string to be escaped.
@@ -126,29 +149,6 @@ abstract class JDatabaseODBC extends JDatabase
 		}
 
 		return $result;
-	}
-
-	/**
-	 * Determines if the connection to the server is active.
-	 *
-	 * @return  boolean  True if connected to the database engine.
-	 *
-	 * @since   11.1
-	 */
-	public function connected()
-	{
-		if (is_resource($this->connection))
-		{
-			$res = odbc_exec($this->connection, 'SELECT 1 AS foo');
-			if (is_resource($res))
-			{
-				if (odbc_result($res, 'foo') == 1)
-				{
-					return true;
-				}
-			}
-		}
-		return false;
 	}
 
 	/**

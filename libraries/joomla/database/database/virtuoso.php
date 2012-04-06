@@ -92,29 +92,6 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 	}
 
 	/**
-	 * Method to escape a string for usage in an SQL statement.
-	 *
-	 * @param   string   $text   The string to be escaped.
-	 * @param   boolean  $extra  Optional parameter to provide extra escaping.
-	 *
-	 * @return  string  The escaped string.
-	 *
-	 * @since   11.1
-	 */
-	public function escape($text, $extra = false)
-	{
-		$result = addslashes($text);
-
-		// Add extra escapes used in LIKE patterns
-		if ($extra)
-		{
-			$result = addcslashes($result, '%_');
-		}
-
-		return $result;
-	}
-
-	/**
 	 * Drops a table from the database.
 	 *
 	 * @param   string   $tableName  The name of the database table to drop.
@@ -135,6 +112,29 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 			$this->query();
 		}
 		return $this;
+	}
+
+	/**
+	 * Method to escape a string for usage in an SQL statement.
+	 *
+	 * @param   string   $text   The string to be escaped.
+	 * @param   boolean  $extra  Optional parameter to provide extra escaping.
+	 *
+	 * @return  string  The escaped string.
+	 *
+	 * @since   11.1
+	 */
+	public function escape($text, $extra = false)
+	{
+		$result = addslashes($text);
+
+		// Add extra escapes used in LIKE patterns
+		if ($extra)
+		{
+			$result = addcslashes($result, '%_');
+		}
+
+		return $result;
 	}
 
 	/**
@@ -192,111 +192,11 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 	 */
 	public function getCollation()
 	{
-		/*
-		 * Some 8-bit charsets are shipped with Virtuoso, but the schema used
-		 * for this driver defines unicode columns, since these are automatically
-		 * stored as UTF-8 internally by Virtuoso for efficiency it seems like
-		 * the best way to future-proof the schema. However...
-		 *
-		 * By default Virtuoso does not ship any unicode collations, those need
-		 * to be defined (and named) by the administrator. Consequently we do not
-		 * specify any collation in the schema and the default sort order will
-		 * be the binary order of unicode serialisation.
-		 *
-		 * If there is a way to find the collation defined for a given column
-		 * I do not know it. The collation can be seen in V_COL_CHECK in
-		 * INFORMATION_SCHEMA.COLUMNS, but not exclusively and I do not know how
-		 * to reliably decode that field.
-		 *
-		 * So the best we can do here, for now, is return any database-wide
-		 * collation setting from the INI file. But since unicode collations are
-		 * defined separately, there's no telling whether the configured collation
-		 * is going to be used for unicode strings or not, without looking that up
-		 * in SYS_COLLATIONS, but frankly this whole area of functionality in
-		 * Virtuoso is just going to need handling manually by a competent server
-		 * andmin and not via Joomla!
-		*/
-		$sql = "SELECT cfg_item_value(virtuoso_ini_path(), 'Parameters', 'Collation')";
+		$sql = 'SELECT cfg_item_value(virtuoso_ini_path(), \'Parameters\', \'Collation\')';
 		$this->setQuery($sql);
 		$cfg = $this->loadColumn(); // column value will be null if not set
 
 		return $cfg[0] ? $cfg[0] : false; 
-	}
-
-	/**
-	 * Gets an exporter class object.
-	 *
-	 * @return  JDatabaseExporterODBC  An exporter object.
-	 *
-	 * @since   11.1
-	 * @throws  JDatabaseException
-	 */
-	public function getExporter()
-	{
-		// Make sure we have an exporter class for this driver.
-		if (!class_exists('JDatabaseExporterVirtuoso'))
-		{
-			throw new JDatabaseException(JText::_('JLIB_DATABASE_ERROR_MISSING_EXPORTER'));
-		}
-
-		$o = new JDatabaseExporterVirtuoso;
-		$o->setDbo($this);
-
-		return $o;
-	}
-
-	/**
-	 * Gets an importer class object.
-	 *
-	 * @return  JDatabaseImporterODBC  An importer object.
-	 *
-	 * @since   11.1
-	 * @throws  JDatabaseException
-	 */
-	public function getImporter()
-	{
-		// Make sure we have an importer class for this driver.
-		if (!class_exists('JDatabaseImporterVirtuoso'))
-		{
-			throw new JDatabaseException(JText::_('JLIB_DATABASE_ERROR_MISSING_IMPORTER'));
-		}
-
-		$o = new JDatabaseImporterVirtuoso;
-		$o->setDbo($this);
-
-		return $o;
-	}
-
-	/**
-	 * Get the number of returned rows for the previous executed SQL statement.
-	 *
-	 * @param   resource  $cursor  An optional database cursor resource to extract the row count from.
-	 *
-	 * @return  integer   The number of returned rows.
-	 *
-	 * @since   11.1
-	 */
-	public function getNumRows($cursor = null)
-	{
-		return odbc_num_rows(is_resource($cursor) ? $cursor : $this->cursor);
-	}
-
-	/**
-	 * Shows the table CREATE statement that creates the given tables.
-	 *
-	 * @param   mixed  $tables  A table name or a list of table names.
-	 *
-	 * @return  array  A list of the create SQL for the tables.
-	 *
-	 * @since   11.1
-	 * @throws  JDatabaseException
-	 */
-	public function getTableCreate($tables)
-	{
-		// TODO: Virtuoso has create_table_sql function added by the
-		// yacutia (conductor) app but we cannot assume it exists.
-		// Check is this function really needed?
-		return false;
 	}
 
 	/**
@@ -398,24 +298,6 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 	}
 
 	/**
-	 * Determines if the database engine supports UTF-8 character encoding.
-	 *
-	 * @return  boolean  True if supported.
-	 *
-	 * @since   11.1
-	 * @deprecated 12.1
-	 */
-	public function hasUTF()
-	{
-		// TODO: Is this for column charsets or schema names, or both?
-		// Virtuoso: SQL_UTF8_EXECS config setting server-wide for schema names
-		// upper/lower functions are narrow, needs charset_recode to make wide
-		// Need to find out more about Joomla's requirements for UTF-8
-		JLog::add('JDatabaseVirtuoso::hasUTF() is deprecated.', JLog::WARNING, 'deprecated');
-		return false;
-	}
-
-	/**
 	 * Method to get the auto-incremented value from the last INSERT statement.
 	 *
 	 * @return  integer  The value of the auto-increment field from the last inserted row.
@@ -424,98 +306,9 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 	 */
 	public function insertid()
 	{
-		// TODO: Virtuoso specific, maybe use ODBC SQL_LASTSERIAL statement instead
 		$cur = odbc_exec($this->connection, "SELECT identity_value()");
 		if (is_resource($cur)) return odbc_result($cur, 'identity_value');
 		return 0;
-	}
-
-	/**
-	 * Locks a table in the database.
-	 *
-	 * @param   string  $table  The name of the table to unlock.
-	 *
-	 * @return  JDatabaseVirtuoso  Returns this object to support chaining.
-	 *
-	 * @since   11.4
-	 * @throws  JDatabaseException
-	 */
-	public function lockTable($table)
-	{
-		// TODO: AFAIK not possible/easy to manually set table locks in Virtuoso 
-		// without faking a predictable query to do it. How important is this?
-		return $this;
-	}
-
-	/**
-	 * Execute the SQL statement.
-	 *
-	 * @return  mixed  A database cursor resource on success, boolean false on failure.
-	 *
-	 * @since   11.1
-	 * @throws  JDatabaseException
-	 */
-	public function query()
-	{
-		if (!is_resource($this->connection))
-		{
-			JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'database');
-			throw new JDatabaseException($this->errorMsg, $this->errorNum);
-		}
-
-		// NB: We allow multiple queries in this driver by setting an array via ::setQuery
-		// This is non-standard for joomla but needed to support multi-row INSERTs for Virtuoso
-		$queries = $this->sql;
-
-		// Serialized values look like a:x (array) or O:x (objects) which cannot be valid SQL
-		if ($queries[1] == ':') $queries = unserialize($queries);
-
-		if (!is_array($queries)) $queries = array($queries);
-
-		foreach ($queries as $query)
-		{
-			// Take a local copy so that we don't modify the original query and cause issues later
-			$sql = $this->replacePrefix((string) $query);
-
-			// If debugging is enabled then let's log the query.
-			if ($this->debug)
-			{
-				// Increment the query counter and add the query to the object queue.
-				$this->count++;
-				$this->log[] = $sql;
-
-				JLog::add($sql, JLog::DEBUG, 'databasequery');
-			}
-
-			// Reset the error values.
-			$this->errorNum = 0;
-			$this->errorMsg = '';
-
-			// Execute the query.
-			$this->cursor = odbc_exec($this->connection, $sql);
-
-			// If an error occurred handle it.
-			if (!is_resource($this->cursor))
-			{
-				$trace = array();
-				array_walk(debug_backtrace(), create_function('$a, $b, $c',
-					'$c[] = "{$a[\'function\']}() in [".basename($a[\'file\']).":{$a[\'line\']}]; ";'),
-					&$trace);
-
-				$this->errorNum = (int) odbc_error($this->connection);
-				$this->errorMsg = (string) odbc_errormsg($this->connection);
-				$this->errorMsg.= ' SQL=' . $sql;
-				$this->errorMsg.= ' TRACE=' . implode(' >> ', array_reverse($trace));
-
-				JLog::add(JText::sprintf('JLIB_DATABASE_QUERY_FAILED', $this->errorNum, $this->errorMsg), JLog::ERROR, 'databasequery');
-				throw new JDatabaseException($this->errorMsg, $this->errorNum);
-			}
-		}
-
-		// In the case of multiple queries, we can only capture affected rows for the final one
-		$this->odbc_affected_rows = odbc_num_rows($this->cursor);
-
-		return is_resource($this->cursor);
 	}
 
 	/**
