@@ -11,6 +11,8 @@ defined('JPATH_PLATFORM') or die;
 
 JLoader::register('JDatabaseODBC', dirname(__FILE__) . '/odbc.php');
 
+define('SQL_NO_CHAR_C_ESCAPE', 5002);
+
 /**
  * Virtuoso ODBC database driver
  *
@@ -86,8 +88,11 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 		// Set the connection options to how we want them
 		if (is_resource($this->connection))
 		{
-			// Prefer to escape null chars in particular
-			odbc_setoption($this->connection, 1, 'SQL_NO_CHAR_C_ESCAPE', 'off');
+//			odbc_setoption($this->connection, 1, SQL_NO_CHAR_C_ESCAPE, 1);
+
+			// Don't use setoption because Virtuoso ODBC driver has a bug that reverses
+			// the meaning of the parameter so that 0 means ON and 1 means OFF
+			odbc_exec($this->connection, 'SET NO_CHAR_C_ESCAPE OFF');
 		}
 	}
 
