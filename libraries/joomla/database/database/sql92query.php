@@ -243,8 +243,7 @@ class JDatabaseQuerySQL92 extends JDatabaseQuery
 	 */
 	public function length($value)
 	{
-		// Assumes strict SQL92 compliance for the arithmetic here!
-		// Result of the division should be rounded down to smallest integer
-		return '((OCTET_LENGTH(' . $value . ') + 1) / 2)';
+		// Assume we're never going to see an odd octet length
+		return '(OCTET_LENGTH(' . $value . ') / 2)';
 	}
 }
