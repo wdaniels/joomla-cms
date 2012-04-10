@@ -239,7 +239,7 @@ class ContentModelArticles extends JModelList
 		else {
 			// Find any up-path categories that are not published
 			// If all categories are published, badcats.id will be null, and we just use the article state
-			$subquery .= ' AND parent.published != 1 GROUP BY cat.id ';
+			$subquery .= ' AND parent.published <> 1 GROUP BY cat.id ';
 			// Select state to unpublished if up-path category is unpublished
 			$publishedWhere = 'CASE WHEN badcats.id is null THEN a.state ELSE 0 END';
 		}
