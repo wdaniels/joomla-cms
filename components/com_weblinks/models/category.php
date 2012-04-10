@@ -137,7 +137,7 @@ class WeblinksModelCategory extends JModelList
 			$query->where('a.state = '.(int) $state);
 		}
 		// do not show trashed links on the front-end
-		$query->where('a.state != -2');
+		$query->where('a.state <> -2');
 
 		// Filter by start and end dates.
 		$nullDate = $db->Quote($db->getNullDate());
