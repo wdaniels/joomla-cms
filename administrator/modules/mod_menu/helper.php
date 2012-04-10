@@ -28,7 +28,7 @@ abstract class ModMenuHelper
 
 		$query->select('a.*, SUM(b.home) AS home');
 		$query->from('#__menu_types AS a');
-		$query->leftJoin('#__menu AS b ON b.menutype = a.menutype AND b.home != 0');
+		$query->leftJoin('#__menu AS b ON b.menutype = a.menutype AND b.home <> 0');
 		$query->select('b.' . $q_lang);
 		$query->leftJoin('#__languages AS l ON l.lang_code = ' . $q_lang);
 		$query->select('l.image');
