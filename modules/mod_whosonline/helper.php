@@ -48,7 +48,7 @@ class modWhosonlineHelper
 	static function getOnlineUserNames($params) {
 		$db		= JFactory::getDbo();
 		$query	= $db->getQuery(true);
-		$query->select('a.username, a.time, a.userid, a.usertype, a.client_id');
+		$query->select('a.username, ' . $query->qn('a.time') . ', a.userid, a.usertype, a.client_id');
 		$query->from('#__session AS a');
 		$query->where('a.userid <> 0');
 		$query->where('a.client_id = 0');
