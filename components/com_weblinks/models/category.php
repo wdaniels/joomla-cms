@@ -151,7 +151,7 @@ class WeblinksModelCategory extends JModelList
 
 		// Filter by language
 		if ($this->getState('filter.language')) {
-			$query->where('a.' . $db->quoteName('language') . ' in (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
+			$query->where($query->qn('a.language') . ' IN (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
 		}
 
 		// Add the list ordering clause.
