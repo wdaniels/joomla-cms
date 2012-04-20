@@ -148,15 +148,16 @@ abstract class ModulesHelper
 	public static function getModules($clientId)
 	{
 		$db		= JFactory::getDbo();
-		$q_module = $db->quoteName('module');
 		$query	= $db->getQuery(true);
+
+		$m_module = $db->quoteName('m.module');
 
 		$query->select('element AS value, name AS text');
 		$query->from('#__extensions as e');
 		$query->where('e.client_id = '.(int)$clientId);
 		$query->where('type = '.$db->quote('module'));
-		$query->leftJoin('#__modules as m ON m.' . $q_module . '=e.element AND m.client_id=e.client_id');
-		$query->where('m.' . $q_module . ' IS NOT NULL');
+		$query->leftJoin('#__modules as m ON ' . $m_module . ' = e.element AND m.client_id = e.client_id');
+		$query->where($m_module . ' IS NOT NULL');
 		$query->group('element,name');
 
 		$db->setQuery($query);
