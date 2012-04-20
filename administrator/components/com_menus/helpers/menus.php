@@ -137,7 +137,7 @@ class MenusHelper
 		$db = JFactory::getDbo();
 		$query = $db->getQuery(true);
 
-		$query->select('a.id AS value, a.title AS text, a.level, a.menutype, a.type, a.template_style_id, a.checked_out');
+		$query->select('a.id AS value, a.title AS text, ' . $query->qn('a.level') . ', a.menutype, a.type, a.template_style_id, a.checked_out');
 		$query->from('#__menu AS a');
 		$query->join('LEFT', $db->quoteName('#__menu').' AS b ON a.lft > b.lft AND a.rgt < b.rgt');
 
@@ -167,7 +167,7 @@ class MenusHelper
 		}
 
 		$query->where('a.published <> -2');
-		$query->group('a.id, a.title, a.level, a.menutype, a.type, a.template_style_id, a.checked_out, a.lft');
+		$query->group('a.id, a.title, ' . $query->qn('a.level') . ', a.menutype, a.type, a.template_style_id, a.checked_out, a.lft');
 		$query->order('a.lft ASC');
 
 		// Get the options.

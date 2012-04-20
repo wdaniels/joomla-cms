@@ -39,7 +39,7 @@ class JFormFieldMenuParent extends JFormFieldList
 		$db = JFactory::getDbo();
 		$query = $db->getQuery(true);
 
-		$query->select('a.id AS value, a.title AS text, a.level');
+		$query->select('a.id AS value, a.title AS text, ' . $query->qn('a.level'));
 		$query->from('#__menu AS a');
 		$query->join('LEFT', $db->quoteName('#__menu').' AS b ON a.lft > b.lft AND a.rgt < b.rgt');
 
@@ -57,7 +57,7 @@ class JFormFieldMenuParent extends JFormFieldList
 		}
 
 		$query->where('a.published <> -2');
-		$query->group('a.id, a.title, a.level, a.lft, a.rgt, a.menutype, a.parent_id, a.published');
+		$query->group('a.id, a.title, ' . $query->qn('a.level') . ', a.lft, a.rgt, a.menutype, a.parent_id, a.published');
 		$query->order('a.lft ASC');
 
 		// Get the options.
