@@ -143,7 +143,7 @@ class plgSearchCategories extends JPlugin
 			$query->group('a.id');
 			$query->order($order);
 			if ($app->isSite() && $app->getLanguageFilter()) {
-				$query->where('a.' . $db->quoteName('language') . ' in (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
+				$query->where($db->quoteName('a.language') . ' IN (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
 			}
 
 			$db->setQuery($query, 0, $limit);
