@@ -122,25 +122,25 @@ class WeblinksModelWeblinks extends JModelList
 	{
 		// Create a new query object.
 		$db		= $this->getDbo();
-		$q_lang = $db->quoteName('language');
 		$query	= $db->getQuery(true);
 		$user	= JFactory::getUser();
 
+		$a_language = $db->quoteName('a.language');
+
 		// Select the required fields from the table.
-		$query->select(
-			$this->getState(
-				'list.select',
-				'a.id, a.title, a.alias, a.checked_out, a.checked_out_time, a.catid,' .
-				'a.hits,' .
-				'a.state, a.access, a.ordering,'.
-				'a.' . $q_lang . ', a.publish_up, a.publish_down'
-			)
+		$fields = $this->getState(
+			'list.select',
+			'a.id, a.title, a.alias, a.checked_out, a.checked_out_time, a.catid, a.hits, ' .
+			'a.state, a.access, a.ordering, a.language, a.publish_up, a.publish_down'
 		);
+		$fields = explode(',', $fields);
+		foreach ($fields as $field) $query->select($query->qn(trim($field)));
+
 		$query->from($db->quoteName('#__weblinks').' AS a');
 
 		// Join over the language
 		$query->select('l.title AS language_title');
-		$query->join('LEFT', $db->quoteName('#__languages').' AS l ON l.lang_code = a.' . $q_lang);
+		$query->join('LEFT', $db->quoteName('#__languages').' AS l ON l.lang_code = ' . $a_language);
 
 		// Join over the users for the checked out user.
 		$query->select('uc.name AS editor');
@@ -193,7 +193,7 @@ class WeblinksModelWeblinks extends JModelList
 
 		// Filter on the language.
 		if ($language = $this->getState('filter.language')) {
-			$query->where('a.' . $q_lang . ' = ' . $db->quote($language));
+			$query->where($a_language . ' = ' . $db->quote($language));
 		}
 
 		// Add the list ordering clause.
