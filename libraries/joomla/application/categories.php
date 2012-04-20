@@ -287,6 +287,8 @@ class JCategories
 
 		$query = $db->getQuery(true);
 
+		$c_language = $db->quoteName('c.language');
+
 		// Right join with c for category
 		$query->select('c.*');
 		$case_when = ' CASE WHEN ';
@@ -320,7 +322,7 @@ class JCategories
 			$query->where('s.id=' . (int) $id);
 			if ($app->isSite() && $app->getLanguageFilter())
 			{
-				$query->leftJoin('#__categories AS s ON (s.lft < c.lft AND s.rgt > c.rgt AND c.language in (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')) OR (s.lft >= c.lft AND s.rgt <= c.rgt)');
+				$query->leftJoin('#__categories AS s ON (s.lft < c.lft AND s.rgt > c.rgt AND ' . $c_language . ' IN (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')) OR (s.lft >= c.lft AND s.rgt <= c.rgt)');
 			}
 			else
 			{
@@ -331,7 +333,7 @@ class JCategories
 		{
 			if ($app->isSite() && $app->getLanguageFilter())
 			{
-				$query->where('c.language in (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
+				$query->where($c_language . ' IN (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
 			}
 		}
 
@@ -359,11 +361,11 @@ class JCategories
 		}
 
 		// Group by
-		$q_lang = $db->quoteName('language');
-		$query->group('c.id, c.asset_id, c.access, c.alias, c.checked_out, c.checked_out_time,
- 			c.created_time, c.created_user_id, c.description, c.extension, c.hits, c.' . $q_lang . ',
-			c.level, c.lft, c.metadata, c.metadesc, c.metakey, c.modified_time, c.note, c.params, c.parent_id,
- 			c.path, c.published, c.rgt, c.title, c.modified_user_id');
+		$query->group('c.id, c.asset_id, c.access, c.alias, c.checked_out, c.checked_out_time, ' .
+ 			'c.created_time, c.created_user_id, c.description, c.extension, ' .
+			'c.hits, ' . $c_language . ', ' . $query->qn('c.level') . ', c.lft, ' .
+			'c.metadata, c.metadesc, c.metakey, c.modified_time, c.note, c.params, ' .
+ 			'c.parent_id, c.path, c.published, c.rgt, c.title, c.modified_user_id');
 
 		// Get the results
 		$db->setQuery($query);
