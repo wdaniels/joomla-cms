@@ -102,7 +102,7 @@ abstract class modRelatedItemsHelper
 
 					// Filter by language
 					if ($app->getLanguageFilter()) {
-						$query->where('a.' . $db->quoteName('language') . ' in (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
+						$query->where($query->qn('a.language') . ' IN (' . $db->Quote(JFactory::getLanguage()->getTag()) . ',' . $db->Quote('*') . ')');
 					}
 
 					$db->setQuery($query);
