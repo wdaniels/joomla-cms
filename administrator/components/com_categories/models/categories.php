@@ -168,7 +168,7 @@ class CategoriesModelCategories extends JModelList
 
 		// Filter on the level.
 		if ($level = $this->getState('filter.level')) {
-			$query->where('a.level <= '.(int) $level);
+			$query->where($query->qn('a.level') . ' <= ' . (int) $level);
 		}
 
 		// Filter by access level.
