@@ -156,8 +156,6 @@ class ContentModelArticles extends JModelList
 		$db = $this->getDbo();
 		$query = $db->getQuery(true);
 
-		$q_lang = $db->quoteName('language');
-
 		// Select the required fields from the table.
 		$fields = $this->getState(
 			'list.select',
@@ -205,12 +203,14 @@ class ContentModelArticles extends JModelList
 		$query->join('LEFT', '#__users AS ua ON ua.id = a.created_by');
 		$query->join('LEFT', '#__users AS uam ON uam.id = a.modified_by');
 
+		$contact_language = $db->quoteName('contact.language');
+
 		// Join on contact table
 		$subQuery = $db->getQuery(true);
-		$subQuery->select('contact.user_id, MAX(contact.id) AS id, contact.' . $q_lang);
+		$subQuery->select('contact.user_id, MAX(contact.id) AS id, ' . $contact_language);
 		$subQuery->from('#__contact_details AS contact');
 		$subQuery->where('contact.published = 1');
-		$subQuery->group('contact.user_id, contact.' . $q_lang);
+		$subQuery->group('contact.user_id, ' . $contact_language);
 		$query->select('contact.id as contactid' );
 		$query->join('LEFT', '(' . $subQuery . ') AS contact ON contact.user_id = a.created_by');
 
@@ -454,10 +454,12 @@ class ContentModelArticles extends JModelList
 			}
 		}
 
+		$a_language = $db->quoteName('a.language');
+
 		// Filter by language
 		if ($this->getState('filter.language')) {
-			$query->where('a.' . $q_lang . ' in ('.$db->quote(JFactory::getLanguage()->getTag()).','.$db->quote('*').')');
-			$query->where('(contact.' . $q_lang . ' in ('.$db->quote(JFactory::getLanguage()->getTag()).','.$db->quote('*').') OR contact.' . $q_lang . ' IS NULL)');
+			$query->where($a_language . ' IN (' . $db->quote(JFactory::getLanguage()->getTag()) . ',' . $db->quote('*') . ')');
+			$query->where('(' . $contact_language . ' IN (' . $db->quote(JFactory::getLanguage()->getTag()) . ',' . $db->quote('*') . ') OR ' . $contact_language . ' IS NULL)');
 		}
 
 		// Add the list ordering clause.
