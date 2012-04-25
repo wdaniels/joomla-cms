@@ -82,6 +82,9 @@ class JDatabaseVirtuoso extends JDatabaseODBC
 		$options['database'] = isset($options['database']) ? $options['database'] : '';
 		$options['select'] = isset($options['select']) ? (bool) $options['select'] : true;
 
+		// Temporary kludge to avoid buggy memory allocation issue in PHP
+		ini_set('odbc.defaultlrl', '1000000');
+
 		// Call the ODBC parent class to make the connection
 		parent::__construct($options);
 
