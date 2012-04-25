@@ -112,6 +112,7 @@ class JInstallationModelSetup extends JModel
 		$map = array(
 			'MySQL'  => 'mysql_connect',
 			'MySQLi' => 'mysqli_connect',
+			'Virtuoso' => 'odbc_connect',
 		);
 
 		// Iterate over the options, building an array.
